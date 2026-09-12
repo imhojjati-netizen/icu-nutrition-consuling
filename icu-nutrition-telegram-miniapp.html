@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دستیار محاسبات تغذیه بالینی ICU</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/dana-font@v4.0.1/dist/font-face.css">
+<style>
+  :root{
+    --ink:#12241F;
+    --ink-soft:#3C534C;
+    --teal-900:#0B4A43;
+    --teal-700:#0F5F55;
+    --teal-600:#147D71;
+    --mint-100:#E4F1EC;
+    --mint-50:#EFF6F3;
+    --paper:#F4F7F5;
+    --card:#FFFFFF;
+    --amber-600:#B8752B;
+    --amber-100:#F7E7D2;
+    --red-600:#A8291F;
+    --red-100:#F6DEDB;
+    --line:#CBD8D2;
+    --line-soft:#E1E9E5;
+    --shadow: 0 1px 2px rgba(11,74,67,0.06), 0 6px 20px rgba(11,74,67,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Vazirmatn',sans-serif;
+    font-size:15px;
+    line-height:1.7;
+  }
+  .mono{ font-family:'JetBrains Mono',monospace; direction:ltr; unicode-bidi:plaintext; }
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---- Sticky chart-tab side nav ---- */
+  .tabnav{
+    width:64px;
+    flex:0 0 64px;
+    background:var(--teal-900);
+    position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:18px 0; gap:6px;
+    z-index:20;
+  }
+  .tabnav .logo{
+    width:34px; height:34px; border-radius:8px; background:var(--mint-100);
+    color:var(--teal-900); display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; margin-bottom:14px;
+  }
+  .tabnav a{
+    writing-mode:vertical-rl; text-orientation:mixed;
+    color:#BFE3DA; text-decoration:none; font-size:12.5px; font-weight:600;
+    padding:12px 8px; border-radius:0 10px 10px 0; border-right:3px solid transparent;
+    letter-spacing:.5px;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .tabnav a:hover{ background:rgba(255,255,255,0.08); color:#fff; }
+  .tabnav a.active{ background:var(--mint-100); color:var(--teal-900); border-color:var(--amber-600); }
+  .tabnav .spacer{flex:1;}
+  .tabnav .print-btn{
+    writing-mode:horizontal-tb; width:40px; height:40px; border-radius:10px;
+    background:var(--amber-600); color:#fff; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+
+  .main{ flex:1; min-width:0; padding:28px 36px 100px; max-width:980px; }
+
+  header.hero{
+    background:linear-gradient(135deg,var(--teal-900),var(--teal-700));
+    color:#fff; border-radius:16px; padding:26px 30px; margin-bottom:26px;
+    position:relative; overflow:hidden;
+  }
+  header.hero::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 40px);
+    pointer-events:none;
+  }
+  header.hero .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1.5px;
+    color:#BFE3DA; text-transform:uppercase; margin-bottom:8px;
+  }
+  header.hero h1{ margin:0 0 8px; font-size:26px; font-weight:800; }
+  header.hero p{ margin:0; color:#D9EDE7; font-size:13.5px; max-width:640px; }
+
+  .disclaimer{
+    background:var(--amber-100); border:1px solid #E3C08C; color:#6B4A1D;
+    border-radius:10px; padding:12px 16px; font-size:12.5px; margin-bottom:26px;
+  }
+
+  section.card{
+    background:var(--card); border:1px solid var(--line-soft); border-radius:14px;
+    padding:22px 24px; margin-bottom:20px; box-shadow:var(--shadow); scroll-margin-top:20px;
+  }
+  section.card h2{
+    display:flex; align-items:center; gap:10px;
+    font-size:16px; margin:0 0 4px; color:var(--teal-900);
+  }
+  section.card h2 .tag{
+    font-family:'JetBrains Mono',monospace; font-size:11px; background:var(--mint-100);
+    color:var(--teal-700); padding:3px 8px; border-radius:6px; font-weight:600;
+  }
+  section.card .desc{ color:var(--ink-soft); font-size:12.5px; margin:0 0 16px; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .field .unit{ font-weight:400; color:#8CA39C; font-size:11px; }
+  input, select{
+    font-family:'Vazirmatn',sans-serif; font-size:13.5px; padding:9px 10px;
+    border:1px solid var(--line); border-radius:8px; background:var(--mint-50); color:var(--ink);
+    outline:none; transition:border-color .15s ease, background .15s ease;
+  }
+  input[type=number]{ font-family:'JetBrains Mono',monospace; direction:ltr; text-align:right; }
+  input:focus, select:focus{ border-color:var(--teal-600); background:#fff; }
+  .checkfield{ display:flex; align-items:center; gap:8px; flex-direction:row-reverse; justify-content:flex-end; }
+  .checkfield label{ font-size:13px; color:var(--ink); font-weight:500; }
+  .checkfield input{ width:16px; height:16px; }
+  .full{ grid-column:1/-1; }
+
+  .calc-bar{
+    position:sticky; bottom:0; background:var(--card); border-top:1px solid var(--line-soft);
+    padding:14px 24px; display:flex; gap:12px; align-items:center; justify-content:flex-end;
+    box-shadow:0 -4px 16px rgba(11,74,67,0.08); border-radius:14px 14px 0 0; margin:0 0 26px;
+  }
+  .btn{
+    font-family:'Vazirmatn',sans-serif; font-weight:700; font-size:14px; border:none;
+    border-radius:10px; padding:12px 22px; cursor:pointer; transition:transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn-primary{ background:var(--teal-700); color:#fff; }
+  .btn-primary:hover{ background:var(--teal-900); }
+  .calc-note{ font-size:12px; color:var(--ink-soft); margin-inline-end:auto; }
+
+  /* ---- Results ---- */
+  #results{ display:none; }
+  .score-row{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+  .score-box{
+    flex:1; min-width:220px; border-radius:12px; padding:16px 18px;
+    background:var(--mint-50); border:1px solid var(--line-soft);
+  }
+  .score-box .num{ font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:700; color:var(--teal-900); }
+  .score-box .lbl{ font-size:12px; color:var(--ink-soft); font-weight:600; margin-bottom:2px; }
+  .score-box .interp{ margin-top:6px; font-size:12.5px; }
+  .pill{ display:inline-block; padding:2px 10px; border-radius:999px; font-size:11.5px; font-weight:700; }
+  .pill.risk-low{ background:#DDF0E4; color:#1E6B3E; }
+  .pill.risk-mod{ background:var(--amber-100); color:#8A5A1E; }
+  .pill.risk-high{ background:var(--red-100); color:var(--red-600); }
+
+  .route-banner{
+    border-radius:12px; padding:16px 20px; margin:14px 0; display:flex; gap:14px; align-items:center;
+    background:var(--teal-900); color:#fff;
+  }
+  .route-banner .badge{
+    font-family:'JetBrains Mono',monospace; font-weight:800; font-size:20px;
+    background:var(--amber-600); padding:8px 16px; border-radius:10px;
+  }
+  .route-banner .why{ font-size:12.5px; color:#D9EDE7; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
+  table.mono-table td, table.mono-table th{ font-family:'JetBrains Mono',monospace; direction:ltr; }
+  th,td{ padding:9px 10px; border-bottom:1px solid var(--line-soft); text-align:right; }
+  th{ background:var(--mint-100); color:var(--teal-900); font-size:11.5px; letter-spacing:.3px; }
+  tr:last-child td{ border-bottom:none; }
+  .note-list{ margin:8px 0 0; padding-inline-start:18px; font-size:12.5px; color:var(--ink-soft); }
+  .alert{
+    border-radius:10px; padding:10px 14px; font-size:12.5px; margin:10px 0;
+    border:1px solid #E3C08C; background:var(--amber-100); color:#6B4A1D;
+  }
+  .alert.danger{ border-color:#D79A93; background:var(--red-100); color:var(--red-600); }
+
+  .fix-card{ border:1px solid var(--line-soft); border-radius:12px; padding:16px 18px; margin-bottom:16px; background:var(--mint-50); }
+  .fix-card .fix-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+  .fix-card .fix-head h4{ margin:0; font-size:14.5px; color:var(--teal-900); }
+  .fix-card .fix-head .curval{ font-family:'JetBrains Mono',monospace; font-size:12px; background:var(--red-100); color:var(--red-600); padding:3px 10px; border-radius:6px; }
+  .fix-methods{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; }
+  .fix-method{ background:#fff; border:1px solid var(--line-soft); border-radius:10px; padding:12px 14px; }
+  .fix-method .m-title{ font-weight:700; font-size:12.5px; color:var(--teal-700); margin-bottom:6px; }
+  .fix-method .m-body{ font-size:12.5px; line-height:1.85; color:var(--ink); }
+  .fix-method .m-body b{ font-family:'JetBrains Mono',monospace; }
+  .fix-ref{ margin-top:10px; font-size:11px; color:var(--ink-soft); border-top:1px dashed var(--line); padding-top:8px; }
+  @media (max-width:700px){ .fix-methods{ grid-template-columns:1fr; } }
+
+  /* ---- Printable sheet (elegant consultation letter, Dana font) ---- */
+  #sheet, #sheet *{ font-family:'Dana','Vazirmatn',sans-serif; }
+  #sheet.card{
+    padding:0; overflow:hidden; border:1px solid var(--line-soft);
+    background:
+      radial-gradient(1100px 260px at 100% 0%, #E9F4F0 0%, transparent 60%),
+      #fff;
+  }
+  .sheet-letterhead{
+    position:relative; padding:34px 38px 26px;
+    background:linear-gradient(120deg,var(--teal-900) 0%, var(--teal-700) 55%, var(--teal-600) 100%);
+    color:#fff; overflow:hidden;
+  }
+  .sheet-letterhead::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(220px 220px at 92% -30%, rgba(255,255,255,.14), transparent 60%),
+      repeating-linear-gradient(120deg, rgba(255,255,255,.05) 0 2px, transparent 2px 26px);
+    pointer-events:none;
+  }
+  .sheet-letterhead .crest{
+    width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.14);
+    border:1.5px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin-bottom:14px;
+  }
+  .sheet-letterhead h2{ margin:0 0 4px; font-size:24px; font-weight:700; letter-spacing:.2px; }
+  .sheet-letterhead .subtitle{ font-size:12.5px; color:#D9EDE7; font-family:'JetBrains Mono',monospace; letter-spacing:.4px; }
+  .sheet-letterhead .meta-row{
+    position:relative; margin-top:18px; display:flex; gap:22px; flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#E7F4F0;
+  }
+  .sheet-letterhead .meta-row b{ color:#fff; font-weight:600; }
+
+  .sheet-body{ padding:26px 38px 32px; }
+
+  .sheet-ptcard{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line-soft); border:1px solid var(--line-soft); border-radius:12px; overflow:hidden;
+    margin:-46px 0 26px; position:relative; box-shadow:var(--shadow);
+  }
+  .sheet-ptcard div{ background:#fff; padding:13px 14px; }
+  .sheet-ptcard span{ display:block; font-size:11px; color:var(--ink-soft); margin-bottom:3px; }
+  .sheet-ptcard b{ font-size:14.5px; color:var(--teal-900); }
+
+  .sheet-sec{ margin-bottom:22px; break-inside:avoid; }
+  .sheet-sec-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .sheet-sec-head .ico{
+    width:30px; height:30px; border-radius:9px; background:var(--mint-100); color:var(--teal-900);
+    display:flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 30px;
+  }
+  .sheet-sec-head h3{ margin:0; font-size:15px; color:var(--teal-900); font-weight:700; }
+  .sheet-sec-body{
+    background:var(--mint-50); border:1px solid var(--line-soft); border-radius:12px; padding:15px 18px;
+    font-size:13px; line-height:1.9;
+  }
+  .sheet-sec-body table{ margin:0; }
+  .sheet-sec-body th{ background:#fff; }
+
+  .sheet-badgebar{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+  .sheet-badge{
+    display:flex; flex-direction:column; gap:2px; background:#fff; border:1px solid var(--line-soft);
+    border-radius:10px; padding:9px 16px; min-width:130px;
+  }
+  .sheet-badge span{ font-size:10.5px; color:var(--ink-soft); font-family:'JetBrains Mono',monospace; }
+  .sheet-badge b{ font-size:19px; color:var(--teal-900); font-family:'JetBrains Mono',monospace; }
+
+  .sheet-route-strip{
+    display:flex; align-items:center; gap:14px; background:var(--teal-900); color:#fff;
+    border-radius:12px; padding:14px 18px;
+  }
+  .sheet-route-strip .rbadge{
+    font-family:'JetBrains Mono',monospace; font-weight:800; font-size:17px; background:var(--amber-600);
+    padding:7px 16px; border-radius:8px; white-space:nowrap;
+  }
+  .sheet-route-strip p{ margin:0; font-size:12.5px; color:#E7F4F0; }
+
+  .sheet-quote{
+    border-right:3px solid var(--amber-600); padding:2px 16px; margin:10px 0; font-size:12.5px; color:var(--ink-soft);
+  }
+
+  .sheet-footer{
+    margin-top:30px; padding-top:18px; border-top:1.5px dashed var(--line);
+    display:flex; justify-content:space-between; align-items:flex-end; font-size:12px; color:var(--ink-soft);
+  }
+  .sheet-footer .stampbox{
+    width:110px; height:70px; border:1.5px dashed var(--line); border-radius:10px;
+    display:flex; align-items:center; justify-content:center; color:#B7C7C1; font-size:11px;
+  }
+  .sheet-footer .sigline{ text-align:center; }
+  .sheet-footer .sigline .line{ width:150px; border-bottom:1.5px solid var(--ink-soft); margin-bottom:6px; }
+
+  @media print{
+    .tabnav, .calc-bar, .disclaimer, header.hero, #inputForm, .print-hide{ display:none !important; }
+    body{ background:#fff; }
+    .main{ padding:0; max-width:none; }
+    #results{ display:block !important; }
+    #results > section.card:not(#sheet){ display:none !important; }
+    #sheet{ display:block !important; box-shadow:none !important; }
+    .sheet-letterhead{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    section.card{ box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+  }
+  @media (max-width:760px){
+    .tabnav a{ font-size:11px; }
+    .main{ padding:20px 14px 90px; }
+    .sheet-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="tabnav" id="tabnav">
+    <div class="logo">ICU</div>
+    <a href="#sec-pt" class="active">مشخصات</a>
+    <a href="#sec-anthro">آنتروپومتری</a>
+    <a href="#sec-vitals">علائم حیاتی</a>
+    <a href="#sec-labs">بیوشیمیایی</a>
+    <a href="#sec-abg">ABG</a>
+    <a href="#sec-fluid">مایعات و دارو</a>
+    <a href="#sec-disease">بیماری / زخم</a>
+    <a href="#sec-gi">مسیر GI</a>
+    <a href="#sec-gitol">تحمل GI</a>
+    <a href="#sec-nrs">NRS</a>
+    <a href="#results">نتیجه</a>
+    <div class="spacer"></div>
+    <button class="print-btn" title="چاپ برگه رژیم" onclick="window.print()">⎙</button>
+  </nav>
+
+  <main class="main">
+
+    <header class="hero">
+      <div class="eyebrow">Critical Care Nutrition Support · ASPEN / ESPEN</div>
+      <h1>دستیار محاسبات تغذیه بالینی ICU</h1>
+      <p>ثبت مشخصات بیمار، آزمایشگاه، ABG و وضعیت بالینی — محاسبه خودکار APACHE II، NRS-2002، تعیین مسیر تغذیه و تولید برگه رژیم کامل (کالری، پروتئین، چربی، الکترولیت، ویتامین و فرمولاسیون TPN / گاواژ).</p>
+    </header>
+
+    <div class="disclaimer">
+      ⚠️ این ابزار یک <b>دستیار محاسباتی کمکی</b> بر پایه فرمول‌های استاندارد APACHE II، NRS-2002 و رهنمودهای ASPEN/ESPEN است و جایگزین قضاوت بالینی متخصص تغذیه/پزشک ICU نیست. اعداد نهایی را همیشه بر اساس شرایط کامل بیمار بازبینی کنید. داده‌ای ذخیره نمی‌شود؛ همه محاسبات فقط در همین صفحه و مرورگر شما انجام می‌شود.
+    </div>
+
+    <form id="inputForm" onsubmit="return false;">
+
+      <!-- PATIENT INFO -->
+      <section class="card" id="sec-pt">
+        <h2><span class="tag">01</span> مشخصات بیمار</h2>
+        <p class="desc">اطلاعات هویتی و پایه بیمار</p>
+        <div class="grid">
+          <div class="field full"><label>نام و نام‌خانوادگی</label><input id="pt_name" type="text" placeholder="مثلاً: علی رضایی"></div>
+          <div class="field"><label>سن <span class="unit">سال</span></label><input id="pt_age" type="number" min="0" max="120"></div>
+          <div class="field"><label>جنسیت</label>
+            <select id="pt_sex"><option value="male">مرد</option><option value="female">زن</option></select>
+          </div>
+          <div class="field"><label>تاریخ بستری</label><input id="pt_admitDate" type="date"></div>
+          <div class="field"><label>شماره پرونده</label><input id="pt_mrn" type="text"></div>
+        </div>
+      </section>
+
+      <!-- ANTHROPOMETRY -->
+      <section class="card" id="sec-anthro">
+        <h2><span class="tag">02</span> آنتروپومتری</h2>
+        <p class="desc">قد، وزن و روند تغییرات وزن؛ برای BMI، وزن ایده‌آل و ریسک ریفیدینگ استفاده می‌شود</p>
+        <div class="grid">
+          <div class="field"><label>قد <span class="unit">cm</span></label><input id="an_height" type="number" step="0.1"></div>
+          <div class="field"><label>وزن فعلی <span class="unit">kg</span></label><input id="an_weight" type="number" step="0.1"></div>
+          <div class="field"><label>وزن معمول (قبل بیماری) <span class="unit">kg</span></label><input id="an_usualWeight" type="number" step="0.1"></div>
+          <div class="field"><label>وزن خشک (در صورت ادم/آسیت) <span class="unit">kg</span></label><input id="an_dryWeight" type="number" step="0.1"></div>
+          <div class="field"><label>دور بازو MAC <span class="unit">cm</span></label><input id="an_mac" type="number" step="0.1"></div>
+          <div class="field"><label>درصد کاهش وزن اخیر <span class="unit">%</span></label><input id="an_wtLossPercent" type="number" step="0.1"></div>
+          <div class="field"><label>بازه زمانی کاهش وزن</label>
+            <select id="an_wtLossPeriod">
+              <option value="">—</option>
+              <option value="1w">۱ هفته</option>
+              <option value="1m">۱ ماه</option>
+              <option value="2m">۲ ماه</option>
+              <option value="3m">۳ ماه</option>
+            </select>
+          </div>
+          <div class="field"><label>دریافت غذایی هفته اخیر</label>
+            <select id="an_intake">
+              <option value="100">طبیعی (~100%)</option>
+              <option value="75">۵۰–۷۵٪ نیاز</option>
+              <option value="50">۲۵–۵۰٪ نیاز</option>
+              <option value="10">۰–۲۵٪ نیاز</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- VITALS (for APACHE II) -->
+      <section class="card" id="sec-vitals">
+        <h2><span class="tag">03</span> علائم حیاتی و سطح هوشیاری</h2>
+        <p class="desc">بدترین مقادیر ۲۴ ساعت گذشته — ورودی مستقیم APACHE II</p>
+        <div class="grid">
+          <div class="field"><label>دمای بدن (core) <span class="unit">°C</span></label><input id="v_temp" type="number" step="0.1"></div>
+          <div class="field"><label>ضربان قلب <span class="unit">bpm</span></label><input id="v_hr" type="number"></div>
+          <div class="field"><label>تعداد تنفس <span class="unit">/min</span></label><input id="v_rr" type="number"></div>
+          <div class="field"><label>فشار سیستولیک <span class="unit">mmHg</span></label><input id="v_sbp" type="number"></div>
+          <div class="field"><label>فشار دیاستولیک <span class="unit">mmHg</span></label><input id="v_dbp" type="number"></div>
+          <div class="field"><label>GCS</label><input id="v_gcs" type="number" min="3" max="15" value="15"></div>
+          <div class="field"><label>FiO2</label><input id="v_fio2" type="number" step="0.01" min="0.21" max="1" value="0.21"></div>
+          <div class="field"><label>برون‌ده ادراری <span class="unit">ml/24h</span></label><input id="v_urine" type="number"></div>
+          <div class="field checkfield"><input id="v_ventilated" type="checkbox"><label for="v_ventilated">تحت ونتیلاتور</label></div>
+        </div>
+      </section>
+
+      <!-- LABS -->
+      <section class="card" id="sec-labs">
+        <h2><span class="tag">04</span> آزمایشگاه بیوشیمیایی</h2>
+        <p class="desc">جدیدترین مقادیر آزمایشگاهی</p>
+        <div class="grid">
+          <div class="field"><label>Na <span class="unit">mEq/L</span></label><input id="lb_na" type="number" step="0.1"></div>
+          <div class="field"><label>K <span class="unit">mEq/L</span></label><input id="lb_k" type="number" step="0.1"></div>
+          <div class="field"><label>Ca <span class="unit">mg/dL</span></label><input id="lb_ca" type="number" step="0.1"></div>
+          <div class="field"><label>Mg <span class="unit">mg/dL</span></label><input id="lb_mg" type="number" step="0.1"></div>
+          <div class="field"><label>Phosphate <span class="unit">mg/dL</span></label><input id="lb_phos" type="number" step="0.1"></div>
+          <div class="field"><label>گلوکز <span class="unit">mg/dL</span></label><input id="lb_glucose" type="number"></div>
+          <div class="field"><label>BUN <span class="unit">mg/dL</span></label><input id="lb_bun" type="number" step="0.1"></div>
+          <div class="field"><label>کراتینین <span class="unit">mg/dL</span></label><input id="lb_cr" type="number" step="0.01"></div>
+          <div class="field checkfield"><input id="lb_arf" type="checkbox"><label for="lb_arf">نارسایی حاد کلیه (AKI)</label></div>
+          <div class="field"><label>تری‌گلیسیرید <span class="unit">mg/dL</span></label><input id="lb_tg" type="number"></div>
+          <div class="field"><label>بیلی‌روبین <span class="unit">mg/dL</span></label><input id="lb_bili" type="number" step="0.1"></div>
+          <div class="field"><label>هموگلوبین <span class="unit">g/dL</span></label><input id="lb_hgb" type="number" step="0.1"></div>
+          <div class="field"><label>هماتوکریت <span class="unit">%</span></label><input id="lb_hct" type="number" step="0.1"></div>
+          <div class="field"><label>WBC <span class="unit">×10³/mm³</span></label><input id="lb_wbc" type="number" step="0.1"></div>
+          <div class="field"><label>آلبومین <span class="unit">g/dL</span></label><input id="lb_alb" type="number" step="0.1"></div>
+          <div class="field"><label>پره‌آلبومین <span class="unit">mg/dL</span></label><input id="lb_prealb" type="number" step="0.1"></div>
+          <div class="field"><label>CRP <span class="unit">mg/L</span></label><input id="lb_crp" type="number" step="0.1"></div>
+        </div>
+      </section>
+
+      <!-- ABG -->
+      <section class="card" id="sec-abg">
+        <h2><span class="tag">05</span> گازهای خون شریانی (ABG)</h2>
+        <div class="grid">
+          <div class="field"><label>pH</label><input id="abg_ph" type="number" step="0.01" value="7.40"></div>
+          <div class="field"><label>PaCO2 <span class="unit">mmHg</span></label><input id="abg_paco2" type="number" step="0.1"></div>
+          <div class="field"><label>PaO2 <span class="unit">mmHg</span></label><input id="abg_pao2" type="number" step="0.1"></div>
+          <div class="field"><label>HCO3 <span class="unit">mEq/L</span></label><input id="abg_hco3" type="number" step="0.1"></div>
+          <div class="field"><label>BE <span class="unit">mEq/L</span></label><input id="abg_be" type="number" step="0.1"></div>
+          <div class="field"><label>SaO2 <span class="unit">%</span></label><input id="abg_sao2" type="number" step="0.1"></div>
+        </div>
+      </section>
+
+      <!-- FLUID & MEDS -->
+      <section class="card" id="sec-fluid">
+        <h2><span class="tag">06</span> مایعات و داروهای مؤثر بر تغذیه</h2>
+        <div class="grid">
+          <div class="field"><label>مایع دریافتی ۲۴ساعته <span class="unit">ml</span></label><input id="fl_in" type="number"></div>
+          <div class="field"><label>مایع خروجی ۲۴ساعته <span class="unit">ml</span></label><input id="fl_out" type="number"></div>
+          <div class="field full"><label>نوع سرم تزریقی فعلی</label><input id="fl_ivType" type="text" placeholder="مثلاً Normal Saline 0.9%"></div>
+          <div class="field"><label>سرعت سرم فعلی <span class="unit">ml/hr</span></label><input id="fl_ivRate" type="number"></div>
+          <div class="field checkfield"><input id="md_vasopressor" type="checkbox"><label for="md_vasopressor">وازوپرسور</label></div>
+          <div class="field"><label>دوز وازوپرسور</label>
+            <select id="md_vasoDose"><option value="low">دوز پایین/در حال قطع</option><option value="mod">دوز متوسط پایدار</option><option value="high">دوز بالا/در حال افزایش</option></select>
+          </div>
+          <div class="field checkfield"><input id="md_insulin" type="checkbox"><label for="md_insulin">انسولین</label></div>
+          <div class="field checkfield"><input id="md_steroid" type="checkbox"><label for="md_steroid">کورتیکواستروئید</label></div>
+          <div class="field checkfield"><input id="md_paralytic" type="checkbox"><label for="md_paralytic">شل‌کننده عضلانی</label></div>
+          <div class="field checkfield"><input id="md_sedation" type="checkbox"><label for="md_sedation">سداسیون عمیق</label></div>
+          <div class="field checkfield"><input id="md_propofol" type="checkbox" onchange="document.getElementById('md_propofolRateWrap').style.display=this.checked?'flex':'none'"><label for="md_propofol">پروپوفول (انفوزیون)</label></div>
+          <div class="field" id="md_propofolRateWrap" style="display:none;"><label>سرعت پروپوفول <span class="unit">ml/hr</span></label><input id="md_propofolRate" type="number" step="0.1"></div>
+          <div class="field checkfield"><input id="md_phenytoin" type="checkbox"><label for="md_phenytoin">فنی‌توئین (Phenytoin)</label></div>
+          <div class="field checkfield"><input id="md_warfarin" type="checkbox"><label for="md_warfarin">وارفارین</label></div>
+          <div class="field checkfield"><input id="md_fluoroquinolone" type="checkbox"><label for="md_fluoroquinolone">فلوروکینولون (سیپروفلوکساسین/لووفلوکساسین)</label></div>
+          <div class="field checkfield"><input id="md_levothyroxine" type="checkbox"><label for="md_levothyroxine">لووتیروکسین</label></div>
+        </div>
+      </section>
+
+      <!-- DISEASE / BURN / WOUND -->
+      <section class="card" id="sec-disease">
+        <h2><span class="tag">07</span> بیماری زمینه‌ای، سوختگی و زخم بستر</h2>
+        <div class="grid">
+          <div class="field full"><label>تشخیص اصلی</label><input id="ds_diagnosis" type="text" placeholder="مثلاً سپسیس شکمی، تروما، پانکراتیت شدید..."></div>
+          <div class="field"><label>دسته‌بندی بالینی</label>
+            <select id="ds_category">
+              <option value="general">سایر / عمومی</option>
+              <option value="majorSurgery">جراحی بزرگ شکمی</option>
+              <option value="trauma">تروما / ضربه مغزی</option>
+              <option value="sepsis">سپسیس</option>
+              <option value="pancreatitis">پانکراتیت شدید</option>
+              <option value="burn">سوختگی</option>
+              <option value="renal">نارسایی کلیه</option>
+              <option value="hepatic">نارسایی کبد</option>
+              <option value="chronicAcute">بیماری مزمن + عارضه حاد (COPD/سیروز/دیالیز)</option>
+              <option value="hemMalignancy">بدخیمی خونی / پیوند مغز استخوان</option>
+            </select>
+          </div>
+          <div class="field"><label>وضعیت سلامت مزمن</label>
+            <select id="ds_chronicHealth">
+              <option value="none">بدون نارسایی عضو مزمن</option>
+              <option value="organFailure">نارسایی مزمن عضو (کبد/قلب/ریه/کلیه)</option>
+              <option value="immunocompromised">نقص ایمنی</option>
+            </select>
+          </div>
+          <div class="field"><label>نوع پذیرش</label>
+            <select id="ds_admissionType">
+              <option value="emergency">اورژانسی / غیرجراحی</option>
+              <option value="electiveSurgery">جراحی الکتیو</option>
+            </select>
+          </div>
+          <div class="field"><label>درصد سطح سوختگی TBSA <span class="unit">%</span></label><input id="ds_tbsa" type="number" min="0" max="100"></div>
+          <div class="field"><label>مرحله زخم فشاری (NPUAP)</label>
+            <select id="ds_woundStage">
+              <option value="0">ندارد</option>
+              <option value="1">مرحله ۱</option>
+              <option value="2">مرحله ۲</option>
+              <option value="3">مرحله ۳</option>
+              <option value="4">مرحله ۴</option>
+              <option value="unstageable">غیرقابل تعیین مرحله</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- GI STATUS / ROUTE -->
+      <section class="card" id="sec-gi">
+        <h2><span class="tag">08</span> وضعیت دستگاه گوارش (تعیین مسیر تغذیه)</h2>
+        <p class="desc">بر اساس این بخش، مسیر پیشنهادی NPO / TPN / NG Tube / Jejunostomy تعیین می‌شود</p>
+        <div class="grid">
+          <div class="field"><label>عملکرد GI</label>
+            <select id="gi_status">
+              <option value="normal">طبیعی / فعال</option>
+              <option value="ileus">ایلئوس</option>
+              <option value="obstruction">انسداد روده</option>
+              <option value="ischemia">ایسکمی روده</option>
+              <option value="fistula">فیستول با خروجی بالا</option>
+              <option value="malabsorption">سوءجذب شدید</option>
+            </select>
+          </div>
+          <div class="field"><label>وضعیت همودینامیک</label>
+            <select id="gi_hemo">
+              <option value="stable">پایدار</option>
+              <option value="unstableLow">ناپایدار - وازوپرسور کم/در حال قطع</option>
+              <option value="unstableHigh">ناپایدار - وازوپرسور بالا/افزایشی</option>
+            </select>
+          </div>
+          <div class="field checkfield"><input id="gi_aspiration" type="checkbox"><label for="gi_aspiration">ریسک آسپیراسیون بالا</label></div>
+          <div class="field checkfield"><input id="gi_gastricIntol" type="checkbox"><label for="gi_gastricIntol">عدم تحمل معده (residual بالا/تهوع مکرر)</label></div>
+          <div class="field"><label>مدت پیش‌بینی‌شده عدم دریافت خوراکی</label>
+            <select id="gi_expectedDuration">
+              <option value="short">کمتر از ۳ روز</option>
+              <option value="mid">۳ تا ۷ روز</option>
+              <option value="long">بیش از ۷ روز</option>
+            </select>
+          </div>
+          <div class="field full" style="background:var(--mint-100);border-radius:10px;padding:12px 14px;">
+            <label style="color:var(--teal-900);">مسیر تغذیه — انتخاب نهایی</label>
+            <select id="gi_manualRoute">
+              <option value="auto">پیشنهاد خودکار سیستم (بر اساس فیلدهای بالا)</option>
+              <option value="NPO">NPO — انتخاب دستی</option>
+              <option value="TPN">TPN — انتخاب دستی</option>
+              <option value="NGTUBE">NG Tube — انتخاب دستی</option>
+              <option value="JEJUNOSTOMY">Jejunostomy — انتخاب دستی</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- GI TOLERANCE MONITORING -->
+      <section class="card" id="sec-gitol">
+        <h2><span class="tag">08.1</span> پایش تحمل تغذیه روده‌ای (فقط برای NG/Jejunostomy فعال)</h2>
+        <p class="desc">در صورت شروع یا ادامه گاواژ — بر اساس رهنمود ASPEN 2016 برای پایش تحمل GI</p>
+        <div class="grid">
+          <div class="field"><label>حجم باقی‌مانده معده GRV <span class="unit">ml</span></label><input id="tol_grv" type="number"></div>
+          <div class="field"><label>اتساع/درد شکم</label>
+            <select id="tol_distension"><option value="no">ندارد</option><option value="yes">دارد</option></select>
+          </div>
+          <div class="field"><label>اسهال</label>
+            <select id="tol_diarrhea"><option value="no">ندارد</option><option value="mild">خفیف (۲–۳ بار/روز)</option><option value="severe">شدید (&gt;۳ بار/روز یا حجم بالا)</option></select>
+          </div>
+          <div class="field"><label>استفراغ/تهوع</label>
+            <select id="tol_vomiting"><option value="no">ندارد</option><option value="yes">دارد</option></select>
+          </div>
+          <div class="field"><label>صداهای روده‌ای</label>
+            <select id="tol_bowelSounds"><option value="present">طبیعی</option><option value="hypoactive">کاهش‌یافته</option><option value="absent">غایب</option></select>
+          </div>
+        </div>
+      </section>
+
+      <!-- NRS -->
+      <section class="card" id="sec-nrs">
+        <h2><span class="tag">09</span> غربالگری ریسک تغذیه‌ای NRS-2002</h2>
+        <div class="grid">
+          <div class="field full"><label>وضعیت تغذیه‌ای (بدترین حالت)</label>
+            <select id="nrs_nutrition">
+              <option value="0">۰ — طبیعی</option>
+              <option value="1">۱ — خفیف: کاهش وزن &gt;۵٪ در ۳ ماه یا دریافت ۵۰–۷۵٪ نیاز در هفته اخیر</option>
+              <option value="2">۲ — متوسط: کاهش وزن &gt;۵٪ در ۲ ماه، BMI ۱۸.۵–۲۰.۵ + وضعیت عمومی ضعیف، یا دریافت ۲۵–۵۰٪</option>
+              <option value="3" selected>۳ — شدید: کاهش وزن &gt;۵٪ در ۱ ماه (&gt;۱۵٪ در۳ماه)، BMI&lt;۱۸.۵ + وضعیت عمومی ضعیف، یا دریافت ۰–۲۵٪</option>
+            </select>
+          </div>
+          <div class="field full"><label>شدت بیماری (نیاز متابولیک)</label>
+            <select id="nrs_severity">
+              <option value="0">۰ — طبیعی</option>
+              <option value="1">۱ — خفیف: شکستگی هیپ، بیماری مزمن با عارضه حاد</option>
+              <option value="2">۲ — متوسط: جراحی بزرگ شکمی، سکته مغزی، پنومونی شدید</option>
+              <option value="3" selected>۳ — شدید: بیمار ICU (APACHE&gt;۱۰)، ضربه سر، BMT</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="calc-bar">
+        <span class="calc-note">همه محاسبات فقط در مرورگر شما انجام می‌شود — بدون ذخیره‌سازی</span>
+        <button type="button" class="btn btn-primary" onclick="runAll()">محاسبه و تولید برگه رژیم</button>
+      </div>
+    </form>
+
+    <!-- ================= RESULTS ================= -->
+    <div id="results">
+
+      <section class="card">
+        <h2><span class="tag">10</span> امتیازهای بالینی</h2>
+        <div class="score-row">
+          <div class="score-box">
+            <div class="lbl">APACHE II SCORE</div>
+            <div class="num" id="out_apache">--</div>
+            <div class="interp" id="out_apacheInterp"></div>
+          </div>
+          <div class="score-box">
+            <div class="lbl">NRS-2002 SCORE</div>
+            <div class="num" id="out_nrs">--</div>
+            <div class="interp" id="out_nrsInterp"></div>
+          </div>
+          <div class="score-box">
+            <div class="lbl">BMI</div>
+            <div class="num" id="out_bmi">--</div>
+            <div class="interp" id="out_bmiInterp"></div>
+          </div>
+        </div>
+        <div id="out_alerts"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="tag">11</span> مسیر تغذیه پیشنهادی</h2>
+        <div class="route-banner">
+          <div class="badge" id="out_route">--</div>
+          <div class="why" id="out_routeWhy"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2><span class="tag">12</span> نیازهای تغذیه‌ای محاسبه‌شده</h2>
+        <table class="mono-table" id="out_needsTable"></table>
+        <div id="out_needsNotes"></div>
+      </section>
+
+      <section class="card" id="tpnSection" style="display:none;">
+        <h2><span class="tag">13</span> فرمولاسیون TPN پیشنهادی</h2>
+        <p class="desc">گزینه‌های آماده‌سازی کیسه تغذیه وریدی بر اساس نیاز محاسبه‌شده — درصد، حجم و سرعت انفوزیون</p>
+        <div id="out_tpnOptions"></div>
+      </section>
+
+      <section class="card" id="enSection" style="display:none;">
+        <h2><span class="tag">13</span> برنامه گاواژ (تغذیه روده‌ای)</h2>
+        <div id="out_enPlan"></div>
+      </section>
+
+      <section class="card" id="giTolSection" style="display:none;">
+        <h2><span class="tag">13.1</span> ارزیابی تحمل تغذیه روده‌ای</h2>
+        <div id="out_giTol"></div>
+      </section>
+
+      <section class="card" id="drugInteractionSection" style="display:none;">
+        <h2><span class="tag">13.2</span> تداخلات دارو–تغذیه</h2>
+        <p class="desc">هشدارهای مبتنی بر داروهای ثبت‌شده که بر جذب تغذیه روده‌ای یا محاسبات کالری اثر می‌گذارند</p>
+        <div id="out_drugInteractions"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="tag">14</span> الکترولیت، ویتامین و ریزمغذی‌ها</h2>
+        <table class="mono-table" id="out_microTable"></table>
+        <div id="out_microNotes"></div>
+      </section>
+
+      <section class="card" id="electrolyteFixSection" style="display:none;">
+        <h2><span class="tag">14.1</span> پروتکل اصلاح اختلالات الکترولیتی و آزمایشگاهی</h2>
+        <p class="desc">بر اساس مقادیر ثبت‌شده آزمایشگاه — برای هر اختلال حداقل دو روش درمانی مبتنی بر مرجع بالینی (Marino's The ICU Book؛ ASHP/ASHP Therapeutic Guidelines؛ ASPEN/ESPEN؛ UpToDate Electrolyte Disorders) و بر اساس غلظت محصولات تجاری موجود در بازار ارائه شده — انتخاب نهایی روش بر عهده پزشک/متخصص تغذیه است.</p>
+        <div id="out_electrolyteFix"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="tag">15</span> پایش و آزمایش‌های پیشنهادی</h2>
+        <ul class="note-list" id="out_monitoring"></ul>
+      </section>
+
+      <!-- PRINTABLE DIET SHEET -->
+      <section class="card" id="sheet">
+        <div class="sheet-letterhead">
+          <div class="crest">🩺</div>
+          <h2>برگ مشاوره تخصصی تغذیه بالینی — ICU</h2>
+          <div class="subtitle">CRITICAL CARE NUTRITION CONSULTATION · ASPEN / ESPEN GUIDELINES</div>
+          <div class="meta-row" id="sheet_meta"></div>
+        </div>
+
+        <div class="sheet-body">
+          <div class="sheet-ptcard" id="sheet_ptGrid"></div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">📊</div><h3>ارزیابی و امتیازهای بالینی</h3></div>
+            <div class="sheet-sec-body">
+              <div class="sheet-badgebar" id="sheet_scores"></div>
+            </div>
+          </div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">🧭</div><h3>مسیر تغذیه انتخاب‌شده</h3></div>
+            <div class="sheet-sec-body" style="padding:0;background:transparent;border:none;">
+              <div class="sheet-route-strip" id="sheet_route"></div>
+            </div>
+          </div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">🔥</div><h3>نیازهای تغذیه‌ای روزانه</h3></div>
+            <div class="sheet-sec-body" id="sheet_needs"></div>
+          </div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">💉</div><h3>فرمولاسیون تغذیه / برنامه گاواژ</h3></div>
+            <div class="sheet-sec-body" id="sheet_formulation"></div>
+          </div>
+
+          <div class="sheet-sec" id="sheet_giTolSec" style="display:none;">
+            <div class="sheet-sec-head"><div class="ico">🩹</div><h3>ارزیابی تحمل تغذیه روده‌ای</h3></div>
+            <div class="sheet-sec-body" id="sheet_giTol"></div>
+          </div>
+
+          <div class="sheet-sec" id="sheet_drugIntSec" style="display:none;">
+            <div class="sheet-sec-head"><div class="ico">💊</div><h3>تداخلات دارو–تغذیه</h3></div>
+            <div class="sheet-sec-body" id="sheet_drugInt"></div>
+          </div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">🧪</div><h3>الکترولیت، ویتامین و ریزمغذی‌ها</h3></div>
+            <div class="sheet-sec-body" id="sheet_micro"></div>
+          </div>
+
+          <div class="sheet-sec" id="sheet_electrolyteFixSec" style="display:none;">
+            <div class="sheet-sec-head"><div class="ico">💊</div><h3>پروتکل اصلاح اختلالات الکترولیتی</h3></div>
+            <div class="sheet-sec-body" id="sheet_electrolyteFix"></div>
+          </div>
+
+          <div class="sheet-sec">
+            <div class="sheet-sec-head"><div class="ico">⚠️</div><h3>هشدارهای بالینی و برنامه پایش</h3></div>
+            <div class="sheet-sec-body" id="sheet_alertsMonitor"></div>
+          </div>
+
+          <div class="sheet-quote">این برگه بر پایه اطلاعات بالینی ثبت‌شده تهیه شده و می‌بایست توسط متخصص تغذیه/پزشک معالج بازبینی و تأیید نهایی گردد.</div>
+
+          <div class="sheet-footer">
+            <div class="sigline"><div class="line"></div>تهیه‌کننده: متخصص تغذیه بالینی</div>
+            <div class="stampbox">مهر و امضا</div>
+            <div class="sigline"><div class="line"></div>تأیید پزشک ICU</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat($(id).value); return isNaN(v) ? null : v; };
+const fmt = (v, d=1) => (v===null||v===undefined||isNaN(v)) ? '—' : Number(v).toFixed(d);
+
+/* scrollspy for tab nav */
+document.querySelectorAll('.tabnav a').forEach(a=>{
+  a.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabnav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+  });
+});
+
+/* ================= APACHE II ================= */
+function apacheTemp(t){
+  if(t===null) return 0;
+  if(t>=41) return 4; if(t>=39) return 3; if(t>=38.5) return 1;
+  if(t>=36) return 0; if(t>=34) return 1; if(t>=32) return 2; if(t>=30) return 3; return 4;
+}
+function apacheMAP(map){
+  if(map===null) return 0;
+  if(map>=160) return 4; if(map>=130) return 3; if(map>=110) return 2;
+  if(map>=70) return 0; if(map>=50) return 2; return 4;
+}
+function apacheHR(hr){
+  if(hr===null) return 0;
+  if(hr>=180) return 4; if(hr>=140) return 3; if(hr>=110) return 2;
+  if(hr>=70) return 0; if(hr>=55) return 2; if(hr>=40) return 3; return 4;
+}
+function apacheRR(rr){
+  if(rr===null) return 0;
+  if(rr>=50) return 4; if(rr>=35) return 3; if(rr>=25) return 1;
+  if(rr>=12) return 0; if(rr>=10) return 1; if(rr>=6) return 2; return 4;
+}
+function apacheOxy(fio2, paco2, pao2){
+  if(pao2===null) return 0;
+  if(fio2>=0.5){
+    const aado2 = (fio2*713) - (paco2||40)/0.8 - pao2;
+    if(aado2>=500) return 4; if(aado2>=350) return 3; if(aado2>=200) return 2; return 0;
+  } else {
+    if(pao2>70) return 0; if(pao2>=61) return 1; if(pao2>=55) return 3; return 4;
+  }
+}
+function apachePH(ph){
+  if(ph===null) return 0;
+  if(ph>=7.7) return 4; if(ph>=7.6) return 3; if(ph>=7.5) return 1;
+  if(ph>=7.33) return 0; if(ph>=7.25) return 2; if(ph>=7.15) return 3; return 4;
+}
+function apacheNa(na){
+  if(na===null) return 0;
+  if(na>=180) return 4; if(na>=160) return 3; if(na>=155) return 2; if(na>=150) return 1;
+  if(na>=130) return 0; if(na>=120) return 2; if(na>=111) return 3; return 4;
+}
+function apacheK(k){
+  if(k===null) return 0;
+  if(k>=7) return 4; if(k>=6) return 3; if(k>=5.5) return 1;
+  if(k>=3.5) return 0; if(k>=3) return 1; if(k>=2.5) return 2; return 4;
+}
+function apacheCr(cr, arf){
+  if(cr===null) return 0;
+  let p;
+  if(cr>=3.5) p=4; else if(cr>=2) p=3; else if(cr>=1.5) p=2; else if(cr>=0.6) p=0; else p=2;
+  return arf ? p*2 : p;
+}
+function apacheHct(hct){
+  if(hct===null) return 0;
+  if(hct>=60) return 4; if(hct>=50) return 2; if(hct>=46) return 1;
+  if(hct>=30) return 0; if(hct>=20) return 2; return 4;
+}
+function apacheWbc(w){
+  if(w===null) return 0;
+  if(w>=40) return 4; if(w>=20) return 2; if(w>=15) return 1;
+  if(w>=3) return 0; if(w>=1) return 2; return 4;
+}
+function apacheAge(age){
+  if(age===null) return 0;
+  if(age>=75) return 6; if(age>=65) return 5; if(age>=55) return 3; if(age>=45) return 2; return 0;
+}
+function calcAPACHE(){
+  const temp=num('v_temp'), hr=num('v_hr'), rr=num('v_rr'), sbp=num('v_sbp'), dbp=num('v_dbp');
+  const gcs=num('v_gcs')===null?15:num('v_gcs'), fio2=num('v_fio2')===null?0.21:num('v_fio2');
+  const ph=num('abg_ph'), paco2=num('abg_paco2'), pao2=num('abg_pao2');
+  const na=num('lb_na'), k=num('lb_k'), cr=num('lb_cr'), hct=num('lb_hct'), wbc=num('lb_wbc');
+  const age=num('pt_age');
+  const arf=$('lb_arf').checked;
+  const map = (sbp!==null && dbp!==null) ? ((sbp + 2*dbp)/3) : null;
+
+  let total = 0;
+  total += apacheTemp(temp);
+  total += apacheMAP(map);
+  total += apacheHR(hr);
+  total += apacheRR(rr);
+  total += apacheOxy(fio2, paco2, pao2);
+  total += apachePH(ph);
+  total += apacheNa(na);
+  total += apacheK(k);
+  total += apacheCr(cr, arf);
+  total += apacheHct(hct);
+  total += apacheWbc(wbc);
+  total += Math.max(0, 15 - gcs);
+  total += apacheAge(age);
+
+  const chronic = $('ds_chronicHealth').value;
+  const admission = $('ds_admissionType').value;
+  let chronicPts = 0;
+  if(chronic !== 'none'){
+    chronicPts = (admission === 'electiveSurgery') ? 2 : 5;
+  }
+  total += chronicPts;
+
+  return { total, map, chronicPts };
+}
+
+/* ================= NRS-2002 ================= */
+function calcNRS(){
+  let nutrition = parseInt($('nrs_nutrition').value);
+  let severity = parseInt($('nrs_severity').value);
+  const age = num('pt_age');
+  let total = nutrition + severity;
+  if(age !== null && age >= 70) total += 1;
+  return { total, nutrition, severity, ageAdj: (age!==null && age>=70) };
+}
+
+/* ================= BMI ================= */
+function calcBMI(){
+  const h = num('an_height'), w = num('an_weight');
+  if(h===null || w===null) return null;
+  const m = h/100;
+  return w/(m*m);
+}
+
+/* ================= Ideal / dosing weight ================= */
+function idealBodyWeight(heightCm, sex){
+  if(heightCm===null) return null;
+  const inches = heightCm/2.54;
+  const over60 = Math.max(0, inches - 60);
+  return sex==='male' ? 50 + 2.3*over60 : 45.5 + 2.3*over60;
+}
+function dosingWeight(actual, ibw){
+  if(actual===null) return ibw;
+  if(ibw===null) return actual;
+  if(actual > ibw*1.3) return ibw + 0.4*(actual-ibw); // adjusted BW for obesity
+  return actual;
+}
+
+/* ================= Route decision ================= */
+function decideRoute(apache){
+  const gi = $('gi_status').value;
+  const hemo = $('gi_hemo').value;
+  const aspiration = $('gi_aspiration').checked;
+  const gastricIntol = $('gi_gastricIntol').checked;
+  const duration = $('gi_expectedDuration').value;
+  const nrs = calcNRS().total;
+
+  // Absolute contraindications to any nutrition -> NPO (temporary)
+  if(hemo==='unstableHigh' || gi==='ischemia'){
+    return { route:'NPO', why:'بی‌ثباتی همودینامیک شدید (وازوپرسور دوز بالا/افزایشی) یا ایسکمی روده — شروع تغذیه به تعویق می‌افتد تا ثبات همودینامیک حاصل شود. مایع‌درمانی و الکترولیت به‌صورت وریدی ادامه یابد.' };
+  }
+  if(gi==='obstruction'){
+    return { route:'NPO', why:'انسداد مکانیکی روده — تغذیه روده‌ای ممنوع است. در صورت تداوم بیش از ۵–۷ روز (یا ۳–۵ روز در صورت NRS≥3)، TPN مدنظر قرار گیرد.' };
+  }
+
+  const giNonFunctional = ['obstruction','ischemia','fistula','malabsorption'].includes(gi) || gi==='ileus';
+  const needsPN = giNonFunctional && (duration==='long' || (duration==='mid' && nrs>=3));
+
+  if(needsPN){
+    return { route:'TPN', why:'دستگاه گوارش غیرفعال/غیرقابل استفاده ('+giLabel(gi)+') به‌همراه مدت پیش‌بینی‌شده طولانی عدم دریافت خوراکی — طبق ASPEN/ESPEN شروع تغذیه وریدی کامل توصیه می‌شود.' };
+  }
+
+  if(gi==='normal' || gi==='ileus'){
+    if(aspiration || gastricIntol){
+      return { route:'JEJUNOSTOMY', why:'ریسک آسپیراسیون بالا یا عدم تحمل معده — تغذیه پس از پیلور (ژژنوستومی/لوله پس‌پیلور) طبق ESPEN ترجیح دارد.' };
+    }
+    if(hemo==='unstableLow'){
+      return { route:'NGTUBE', why:'بیمار با وازوپرسور دوز پایین و رو به قطع — تغذیه روده‌ای زودرس با شروع تروفیک از طریق NG tube و پایش دقیق تحمل GI توصیه می‌شود.' };
+    }
+    return { route:'NGTUBE', why:'دستگاه گوارش فعال و بیمار همودینامیک پایدار — طبق اصل «اگر روده کار می‌کند از آن استفاده کنید» (ASPEN/ESPEN)، تغذیه روده‌ای زودرس (۲۴–۴۸ ساعت) از طریق NG Tube ارجح است.' };
+  }
+
+  // fistula / malabsorption short duration
+  return { route:'NGTUBE', why:'در حالی که وضعیت GI پایش می‌شود، تغذیه روده‌ای تروفیک با پایش دقیق آغاز می‌گردد؛ در صورت عدم تحمل، مسیر به TPN تغییر یابد.' };
+}
+function routeLabelFa(r){
+  return {NPO:'NPO', TPN:'TPN', NGTUBE:'NG Tube', JEJUNOSTOMY:'Jejunostomy'}[r] || r;
+}
+function giLabel(v){
+  return {ileus:'ایلئوس', obstruction:'انسداد', ischemia:'ایسکمی', fistula:'فیستول خروجی بالا', malabsorption:'سوءجذب شدید', normal:'طبیعی'}[v] || v;
+}
+
+/* ================= Nutrition needs ================= */
+function calcNeeds(route){
+  const age = num('pt_age'); const sex = $('pt_sex').value;
+  const h = num('an_height'); const wActual = num('an_weight'); const wUsual = num('an_usualWeight');
+  const dry = num('an_dryWeight');
+  const weightForCalc = dry !== null ? dry : wActual;
+  const ibw = idealBodyWeight(h, sex);
+  const dosingWt = dosingWeight(weightForCalc, ibw);
+  const bmi = calcBMI();
+  const category = $('ds_category').value;
+  const tbsa = num('ds_tbsa') || 0;
+  const woundStage = $('ds_woundStage').value;
+  const cr = num('lb_cr'); const arf = $('lb_arf').checked;
+
+  // ---- Calorie target ----
+  let kcalPerKg = 25; // ASPEN/ESPEN general critically ill baseline 25-30
+  let calorieNote = 'محدوده استاندارد ۲۵–۳۰ kcal/kg/day برای بیمار بحرانی (ESPEN ICU 2019)';
+  if(category==='burn' && tbsa>0){
+    // simplified Curreri-based estimate
+    const kcalTotal = (25*dosingWt) + (40*tbsa);
+    var totalKcal = Math.round(kcalTotal);
+    calorieNote = 'فرمول تخمینی سوختگی (نوع Curreri‑محور): ۲۵ kcal/kg + ۴۰ kcal × %TBSA — نیاز به بازبینی روزانه دارد.';
+  } else {
+    var totalKcal = Math.round(kcalPerKg * dosingWt);
+  }
+  // early phase hypocaloric feeding note if first days assumed unknown -> always mention
+
+  // ---- Protein ----
+  let proteinPerKg = 1.3;
+  if(category==='burn') proteinPerKg = tbsa>=20 ? 2.0 : 1.5;
+  if(woundStage!=='0') proteinPerKg = Math.max(proteinPerKg, 1.5);
+  if(category==='renal'){
+    proteinPerKg = arf ? 1.5 : 0.9; // without dialysis lower, with CRRT/AKI higher (assume CRRT context)
+  }
+  if(category==='hepatic') proteinPerKg = 1.2;
+  const proteinG = Math.round(proteinPerKg * dosingWt);
+  const proteinKcal = proteinG * 4;
+
+  // ---- Fat ----
+  let fatPercentNonProtein = 30; // % of non-protein calories
+  const nonProteinKcal = Math.max(0, totalKcal - proteinKcal);
+  let fatKcal = Math.round(nonProteinKcal * (fatPercentNonProtein/100));
+  let fatG = Math.round(fatKcal / 9);
+  let fatWarning = '';
+  const tg = num('lb_tg');
+  if(tg !== null && tg > 400){
+    fatWarning = 'هشدار: TG > 400 mg/dL — امولسیون چربی وریدی باید کاهش یا متوقف شود تا سطح TG کنترل گردد.';
+    fatKcal = Math.round(fatKcal*0.3); fatG = Math.round(fatKcal/9);
+  }
+
+  // ---- Carb ----
+  const carbKcal = Math.max(0, totalKcal - proteinKcal - fatKcal);
+  const carbG = Math.round(carbKcal / 3.4); // dextrose ~3.4 kcal/g in solution
+  const grirMgKgMin = (carbG*1000) / (dosingWt*24*60);
+
+  // ---- Fluid ----
+  let fluidMlPerKg = 30;
+  let fluidTotal = Math.round(fluidMlPerKg * dosingWt);
+  let fluidNote = 'برآورد نگهدارنده ۲۵–۳۵ ml/kg/day؛ بر اساس تعادل مایعات، عملکرد کلیه و قلب تنظیم شود.';
+  if(category==='burn' && tbsa>0){
+    fluidNote = 'برای احیای مایعات ۲۴ ساعت اول سوختگی، فرمول پارکلند (4ml × kg × %TBSA) به‌طور جداگانه از تغذیه محاسبه و اعمال شود؛ عدد بالا صرفاً نیاز نگهدارنده تغذیه‌ای است.';
+  }
+
+  return {
+    dosingWt, ibw, bmi, totalKcal, calorieNote,
+    proteinG, proteinKcal, proteinPerKg,
+    fatG, fatKcal, fatWarning,
+    carbG, carbKcal, grirMgKgMin,
+    fluidTotal, fluidNote
+  };
+}
+
+/* ================= Micronutrients ================= */
+function calcMicro(dosingWt, category, tbsa, woundStage, labs){
+  const rows = [];
+  rows.push(['سدیم (Na)', Math.round(1*dosingWt)+'–'+Math.round(2*dosingWt), 'mEq/day', labs.na!==null && labs.na<135 ? 'هیپوناترمی — بازبینی مایعات' : (labs.na!==null && labs.na>145?'هیپرناترمی':'')]);
+  rows.push(['پتاسیم (K)', Math.round(1*dosingWt)+'–'+Math.round(2*dosingWt), 'mEq/day', labs.k!==null && labs.k<3.5 ? 'هیپوکالمی — جبران قبل/حین تغذیه' : (labs.k!==null && labs.k>5?'هیپرکالمی — احتیاط':'')]);
+  rows.push(['منیزیم (Mg)', '8–20', 'mEq/day', labs.mg!==null && labs.mg<1.8?'هیپومنیزمی — ریسک ریفیدینگ':'']);
+  rows.push(['فسفات', '20–40', 'mmol/day', labs.phos!==null && labs.phos<2.5?'هیپوفسفاتمی — پایش دقیق ریفیدینگ':'']);
+  rows.push(['کلسیم', '10–15', 'mEq/day', '']);
+  rows.push(['مولتی‌ویتامین وریدی/روده‌ای استاندارد', '1 amp/day', 'IV یا با فرمولای روده‌ای', '']);
+  rows.push(['ریزمغذی‌های ترکیبی (Trace elements)', '1 vial/day', 'Zn, Cu, Mn, Cr, Se', '']);
+  if(category==='burn' || woundStage!=='0'){
+    rows.push(['ویتامین C', '500–1000', 'mg/day (نیاز افزایشی زخم/سوختگی)', '']);
+    rows.push(['روی (Zinc) اضافه', '220', 'mg/day به‌صورت موقت (سولفات روی)', '']);
+  }
+  if(category==='burn' && tbsa>=20){
+    rows.push(['ویتامین C دوز بالا (سوختگی وسیع)', 'تا 1000–2000', 'mg/day طبق پروتکل مرکز', '']);
+  }
+  return rows;
+}
+
+/* ================= TPN formulation ================= */
+function calcTPN(needs){
+  const { carbG, proteinG, fatG, fluidTotal, totalKcal } = needs;
+  // stock concentrations
+  const dextroseVol = carbG / 0.70;      // using D70% stock -> ml
+  const aminoVol = proteinG / 0.10;      // 10% amino acid -> ml
+  const lipidVol = fatG / 0.20;          // 20% lipid emulsion -> ml
+  const baseVol = dextroseVol + aminoVol + lipidVol;
+  const electrolyteVol = 100; // approx additive volume for electrolytes/vitamins/trace elements
+  const totalVol = Math.round(baseVol + electrolyteVol);
+
+  const rate24 = totalVol / 24;
+  const rateCyclic = totalVol / 14; // 14h cyclic infusion
+
+  return {
+    dextroseVol: Math.round(dextroseVol), aminoVol: Math.round(aminoVol), lipidVol: Math.round(lipidVol),
+    totalVol, rate24: rate24.toFixed(1), rateCyclic: rateCyclic.toFixed(1)
+  };
+}
+
+/* ================= Enteral formula plan ================= */
+function chooseFormula(category, labs){
+  if(category==='renal') return {name:'فرمول اختصاصی نارسایی کلیه (کالری غلیظ، پتاسیم/فسفر پایین)', density:2.0};
+  if(category==='hepatic') return {name:'فرمول غنی از BCAA برای نارسایی کبد', density:1.2};
+  if(labs.glucose!==null && labs.glucose>180) return {name:'فرمول دیابتی/کربوهیدرات پایین (کنترل قند)', density:1.0};
+  if(category==='pancreatitis' || category==='malabsorption') return {name:'فرمول نیمه‌عنصری/عنصری (Semi-elemental)', density:1.0};
+  if(category==='trauma' || category==='majorSurgery') return {name:'فرمول ایمنی‌تعدیل‌کننده (Immune-modulating) غنی از آرژنین/امگا-۳', density:1.0};
+  return {name:'فرمول پلیمریک استاندارد', density:1.2};
+}
+
+function calcEnteral(route, needs, category, labs){
+  const formula = chooseFormula(category, labs);
+  const dailyVol = Math.round((needs.totalKcal / formula.density));
+  const startRate = route==='JEJUNOSTOMY' ? 10 : 20;
+  const goalRate = Math.round(dailyVol / 20); // ~20h continuous infusion window
+  return { formula, dailyVol, startRate, goalRate };
+}
+
+/* ================= Electrolyte / lab disorder correction protocols ================= */
+function fixCard(title, curLabel, curVal, methodA, methodB, ref){
+  return `
+  <div class="fix-card">
+    <div class="fix-head"><h4>${title}</h4><span class="curval">${curLabel}: ${curVal}</span></div>
+    <div class="fix-methods">
+      <div class="fix-method"><div class="m-title">روش ۱ — ${methodA.title}</div><div class="m-body">${methodA.body}</div></div>
+      <div class="fix-method"><div class="m-title">روش ۲ — ${methodB.title}</div><div class="m-body">${methodB.body}</div></div>
+    </div>
+    <div class="fix-ref">📚 مرجع: ${ref}</div>
+  </div>`;
+}
+
+function generateElectrolyteFix(labs, wt){
+  let html = '';
+  const w = wt || 70;
+
+  /* ---- Potassium ---- */
+  if(labs.k !== null && labs.k < 3.5){
+    const deficitMeq = Math.round((3.5 - labs.k) * w * 0.3); // rough estimate for reference only
+    html += fixCard('هیپوکالمی (Hypokalemia)', 'K فعلی', labs.k+' mEq/L',
+      {title:'انفوزیون محیطی (Peripheral) رقیق در نرمال سالین',
+       body:`آمپول KCl 15% (10ml = <b>20mEq</b> K⁺، معادل ۲mEq/ml) — بر اساس شدت: K بین ۳–۳.۵ → <b>20–40 mEq</b> در <b>NS 0.9% حجم 100–500ml</b> با سرعت حداکثر <b>10 mEq/hr</b> از راه ورید محیطی (غلظت نباید از ۴۰mEq/L در خط محیطی بیشتر شود). از حلال دکستروز پرهیز شود (انسولین ترشحی، K را بیشتر داخل سلول می‌برد).`},
+      {title:'انفوزیون از طریق خط مرکزی (تحت مانیتورینگ قلبی ICU)',
+       body:`در کمبود شدید (K&lt;2.5 یا علامت‌دار/آریتمی): <b>KCl تا 40 mEq در 100ml NS0.9%</b> با سرعت <b>10–20 mEq/hr</b> از راه خط مرکزی با مانیتورینگ مداوم ECG؛ حداکثر معمول ۴۰mEq/hr در شرایط اورژانس با مانیتورینگ دقیق. کنترل مجدد K هر ۲–۴ ساعت.`},
+      'Marino\'s The ICU Book (Fluid, Electrolyte & Acid-Base disorders); ASHP IV Potassium Replacement Guidelines; UpToDate — Treatment of hypokalemia'
+    );
+  }
+  if(labs.k !== null && labs.k >= 6){
+    html += fixCard('هیپرکالمی (Hyperkalemia)', 'K فعلی', labs.k+' mEq/L',
+      {title:'تثبیت غشا + انتقال داخل سلولی سریع',
+       body:`۱) کلسیم گلوکونات 10% (آمپول 10ml=<b>4.65 mEq</b> Ca عنصری) — 1 آمپول (10ml) IV طی ۲–۳ دقیقه در صورت تغییرات ECG، تکرار در صورت نیاز.<br>۲) انسولین کریستال ۱۰ واحد IV + دکستروز 50% (آمپول 50ml=25g) ۱ آمپول یا معادل دکستروز 10% ۲۵۰ml. اثر ظرف ۱۵–۳۰ دقیقه، حدود ۴–۶ ساعت طول می‌کشد — گلوکز خون ساعتی چک شود.`},
+      {title:'دفع پتاسیم از بدن',
+       body:`۱) بی‌کربنات سدیم 8.4% (1mEq/ml) — 50 mEq (50ml) IV طی ۵ دقیقه در صورت اسیدوز همراه.<br>۲) در نارسایی کلیه یا عدم پاسخ به درمان طبی: <b>دیالیز اورژانسی</b>؛ به‌عنوان جایگزین کندتر، رزین تبادل یونی (Patiromer / Sodium Polystyrene Sulfonate) خوراکی یا رکتال.`},
+      'Marino\'s The ICU Book; KDIGO/UpToDate — Treatment of hyperkalemia; ASHP Emergency Management of Hyperkalemia'
+    );
+  }
+
+  /* ---- Sodium ---- */
+  if(labs.na !== null && labs.na < 130){
+    html += fixCard('هیپوناترمی (Hyponatremia)', 'Na فعلی', labs.na+' mEq/L',
+      {title:'اصلاح تدریجی با سالین ایزوتونیک (بدون علامت / خفیف)',
+       body:`نرمال سالین <b>0.9% (154 mEq Na/L)</b> با سرعت متناسب با وزن و حجم داخل عروقی؛ سرعت اصلاح <b>حداکثر 8 mEq/L در ۲۴ ساعت</b> (حداکثر ۶–۸ در بیماران پرخطر ODS) برای پیشگیری از سندروم دمیلینه شدن اسموتیک (ODS).`},
+      {title:'سالین هیپرتونیک (علامت‌دار شدید / تشنج / ادم مغزی)',
+       body:`سالین هیپرتونیک <b>3% (513 mEq Na/L)</b> — بولوس ۱۰۰–۱۵۰ml طی ۱۰–۲۰ دقیقه، قابل تکرار تا ۳ بار در صورت تداوم علائم؛ یا انفوزیون مداوم با سرعت 0.5–1 ml/kg/hr. Na سرم هر ۲–۴ ساعت کنترل و سرعت کلی اصلاح نباید از ۸ mEq/L/24h تجاوز کند.`},
+      'Marino\'s The ICU Book; ASHP Hypertonic Saline Guidelines; UpToDate — Overview of hyponatremia treatment (Adrogué–Madias)'
+    );
+  }
+  if(labs.na !== null && labs.na > 150){
+    const tbw = w * 0.6;
+    const freeWaterDeficit = Math.round(tbw * ((labs.na/140)-1));
+    html += fixCard('هیپرناترمی (Hypernatremia)', 'Na فعلی', labs.na+' mEq/L',
+      {title:'جایگزینی آب آزاد خوراکی/گاواژی',
+       body:`کمبود آب آزاد تخمینی ≈ <b>${freeWaterDeficit>0?freeWaterDeficit:0} لیتر</b> (فرمول: TBW×[(Na/140)−1]) — جایگزینی آب از راه NG/Jejunostomy یا خوراکی، اصلاح طی ۴۸–۷۲ ساعت با کاهش حداکثر <b>10–12 mEq/L در 24 ساعت</b>.`},
+      {title:'محلول وریدی هیپوتونیک',
+       body:`دکستروز 5% در آب (D5W) یا <b>نرمال سالین 0.45%</b> (77 mEq Na/L) وریدی با سرعت محاسبه‌شده بر مبنای کسری آب آزاد؛ در بیماران همودینامیک ناپایدار ابتدا با NS0.9% تثبیت حجم و سپس تبدیل به محلول هیپوتونیک.`},
+      'Marino\'s The ICU Book; UpToDate — Treatment of hypernatremia; ASPEN/ESPEN fluid & electrolyte guidance'
+    );
+  }
+
+  /* ---- Magnesium ---- */
+  if(labs.mg !== null && labs.mg < 1.8){
+    const severe = labs.mg < 1.2;
+    html += fixCard('هیپومنیزمی (Hypomagnesemia)', 'Mg فعلی', labs.mg+' mg/dL',
+      {title:'انفوزیون استاندارد (خفیف تا متوسط)',
+       body:`منیزیم سولفات 50% (آمپول 2ml=<b>~8 mEq</b> Mg، یا آمپول 5ml≈۲۰mEq) — <b>1–2 گرم (≈8–16 mEq)</b> رقیق‌شده در 50–100ml NS0.9% یا D5W، انفوزیون طی ۱ ساعت.`},
+      {title:'دوز بالا / علامت‌دار (آریتمی، تتانی، تشنج)',
+       body:`در آریتمی تهدیدکننده حیات (مثل Torsades de Pointes): <b>2 گرم MgSO4 (آمپول 5ml)</b> IV push طی ۲–۳ دقیقه. در کمبود شدید بدون آریتمی: <b>4–6 گرم در 500–1000ml NS/D5W طی 12–24 ساعت</b>. در نارسایی کلیه دوز و سرعت به نصف کاهش یابد و تحت پایش رفلکس‌های تاندونی و تنفس.`},
+      'Marino\'s The ICU Book; ACLS Guidelines (Torsades de Pointes); UpToDate — Hypomagnesemia treatment'
+    );
+  }
+
+  /* ---- Phosphate ---- */
+  if(labs.phos !== null && labs.phos < 2.5){
+    const severe = labs.phos < 1.0;
+    html += fixCard('هیپوفسفاتمی (Hypophosphatemia)', 'Phosphate فعلی', labs.phos+' mg/dL',
+      {title:'پتاسیم فسفات تزریقی (در صورت هیپوکالمی همزمان)',
+       body:`ویال استاندارد پتاسیم فسفات: هر <b>1ml ≈ 3 mmol فسفات + 4.4 mEq پتاسیم</b> — دوز خفیف/متوسط: <b>0.3–0.6 mmol/kg</b> رقیق در 250–500ml NS0.9% طی ۶ ساعت؛ دوز شدید (Phos&lt;1): <b>0.6–1 mmol/kg طی 8–12 ساعت</b>. سطح K و Ca طی انفوزیون کنترل شود (خطر هیپوکلسمی).`},
+      {title:'سدیم فسفات تزریقی (در صورت نیاز به احتیاط K)',
+       body:`ویال استاندارد سدیم فسفات: هر <b>1ml ≈ 3 mmol فسفات + 4 mEq سدیم</b> — همان دوزبندی mmol/kg بالا با جایگزینی محصول سدیمی به‌جای پتاسیمی در بیماران هیپرکالمیک یا نارسایی کلیه؛ سرعت انفوزیون حداکثر ۷.۵ mmol/hr.`},
+      'Clinical Nutrition/ASPEN Refeeding Syndrome Protocols (Taylor et al. IV phosphate replacement protocol); UpToDate — Hypophosphatemia treatment'
+    );
+  }
+
+  /* ---- Calcium ---- */
+  if(labs.ca !== null && labs.ca < 8.5){
+    html += fixCard('هیپوکلسمی (Hypocalcemia)', 'Ca فعلی', labs.ca+' mg/dL',
+      {title:'کلسیم گلوکونات 10% (ترجیحی برای خط محیطی)',
+       body:`آمپول 10ml = 1g = <b>~4.65 mEq (93mg) کلسیم عنصری</b> — 1–2 آمپول (10–20ml) رقیق در 50–100ml D5W، انفوزیون طی ۱۰–۲۰ دقیقه برای علامت‌دار، یا انفوزیون مداوم 1–2 mg/kg/hr کلسیم عنصری برای کمبود مداوم؛ کمتر محرک بافتی، مناسب خط محیطی.`},
+      {title:'کلسیم کلراید 10% (غلظت بالاتر، فقط خط مرکزی)',
+       body:`آمپول 10ml = 1g = <b>~13.6 mEq (272mg) کلسیم عنصری</b> (سه برابر گلوکونات) — به‌دلیل ریسک نکروز بافتی در نشت، فقط از راه خط ورید مرکزی تزریق شود؛ در ایست قلبی هیپوکلسمیک یا هیپرکالمی شدید ارجح است.`},
+      'Marino\'s The ICU Book; UpToDate — Treatment of hypocalcemia; ASHP IV Calcium Salts comparison'
+    );
+  }
+
+  return html;
+}
+
+/* ================= GI tolerance monitoring (ASPEN 2016) ================= */
+function generateGiTolerance(route){
+  if(route!=='NGTUBE' && route!=='JEJUNOSTOMY') return null;
+  const grv = num('tol_grv');
+  const distension = $('tol_distension').value;
+  const diarrhea = $('tol_diarrhea').value;
+  const vomiting = $('tol_vomiting').value;
+  const bowel = $('tol_bowelSounds').value;
+
+  let verdict, cls, actions = [];
+
+  if(bowel==='absent' || (distension==='yes' && vomiting==='yes')){
+    verdict='توقف موقت تغذیه روده‌ای'; cls='risk-high';
+    actions.push('صداهای روده‌ای غایب یا ترکیب اتساع شکمی + استفراغ — تغذیه روده‌ای موقتاً متوقف و علت (ایلئوس، انسداد) بررسی شود.');
+    actions.push('ارزیابی مجدد بالینی و تصویربرداری شکم در صورت اندیکاسیون؛ در صورت تداوم بیش از ۲۴–۴۸ ساعت، TPN جایگزین مدنظر قرار گیرد.');
+  } else if(grv!==null && grv>500){
+    verdict='توقف/کاهش گاواژ و ارزیابی مجدد'; cls='risk-high';
+    actions.push(`GRV ثبت‌شده ${grv}ml (بالای آستانه ۵۰۰ml طبق ASPEN) — گاواژ متوقف و پس از ۱–۲ ساعت با معاینه مجدد بررسی شود.`);
+    actions.push('در نظر گرفتن پروکینتیک (مترو کلوپرامید/اریترومایسین) و تغییر به تغذیه پس‌پیلور (Jejunostomy) در صورت تکرار.');
+  } else if(diarrhea==='severe'){
+    verdict='ادامه با احتیاط + بررسی علت اسهال'; cls='risk-mod';
+    actions.push('اسهال شدید — رد عفونت C.difficile، بررسی داروهای اسموتیک/آنتی‌بیوتیک، در نظر گرفتن فرمولای حاوی فیبر محلول یا نیمه‌عنصری، کاهش موقت سرعت انفوزیون.');
+  } else if((grv!==null && grv>=250) || distension==='yes' || vomiting==='yes'){
+    verdict='ادامه گاواژ با پایش نزدیک'; cls='risk-mod';
+    actions.push('طبق ASPEN 2016، صرفاً GRV بین ۲۵۰–۵۰۰ml به‌تنهایی دلیل کافی برای توقف تغذیه نیست؛ اما علائم همراه (اتساع/تهوع) هر ۴ ساعت پایش و در صورت تشدید، سرعت گاواژ کاهش یابد.');
+  } else {
+    verdict='تحمل مناسب — ادامه طبق برنامه'; cls='risk-low';
+    actions.push('هیچ علامت عدم تحملی ثبت نشده — ادامه گاواژ طبق سرعت هدف و افزایش تدریجی در صورت عدم رسیدن به هدف کالری.');
+  }
+
+  return { verdict, cls, actions, grv, distension, diarrhea, vomiting, bowel };
+}
+
+function renderGiTolerance(gi){
+  if(!gi) return '';
+  return `
+    <div class="route-banner" style="background:${gi.cls==='risk-high'?'var(--red-600)':(gi.cls==='risk-mod'?'var(--amber-600)':'var(--teal-900)')};">
+      <div class="badge" style="background:rgba(255,255,255,.25);">${gi.verdict}</div>
+      <div class="why">بر اساس GRV، اتساع شکم، استفراغ، اسهال و صداهای روده‌ای ثبت‌شده</div>
+    </div>
+    <ul class="note-list">${gi.actions.map(a=>`<li>${a}</li>`).join('')}</ul>
+    <div class="fix-ref">📚 مرجع: ASPEN 2016 Guidelines for Nutrition Support Therapy in the Critically Ill; McClave et al., JPEN — Enteral feeding intolerance monitoring</div>
+  `;
+}
+
+/* ================= Drug–nutrient interactions ================= */
+function generateDrugInteractions(needs, route){
+  const items = [];
+  if($('md_propofol').checked){
+    const rate = num('md_propofolRate');
+    if(rate!==null){
+      const kcalPerDay = Math.round(rate * 24 * 1.1); // propofol 10% lipid emulsion ≈1.1 kcal/ml
+      items.push({
+        title:'پروپوفول — منبع پنهان کالری/چربی',
+        body:`پروپوفول در امولسیون لیپیدی ۱۰٪ فرموله شده و <b>~1.1 kcal/ml</b> کالری چربی می‌دهد. با سرعت ثبت‌شده ${rate} ml/hr، پروپوفول به‌تنهایی <b>~${kcalPerDay} kcal/day</b> (عمدتاً چربی) تأمین می‌کند — این مقدار باید از هدف کالری/چربی محاسبه‌شده کسر شود تا از اورفیدینگ (به‌خصوص هیپرتری‌گلیسیریدمی) پیشگیری شود.`,
+        ref:'Mirtallo et al., ASPEN Parenteral Nutrition Guidelines; UpToDate — Propofol infusion syndrome & caloric load'
+      });
+    } else {
+      items.push({
+        title:'پروپوفول — منبع پنهان کالری/چربی',
+        body:'پروپوفول حاوی امولسیون چربی ۱۰٪ (~1.1 kcal/ml) است. لطفاً سرعت انفوزیون (ml/hr) را وارد کنید تا کالری اضافی محاسبه و از هدف چربی/کالری کل کسر شود.',
+        ref:'ASPEN Parenteral Nutrition Guidelines'
+      });
+    }
+  }
+  if($('md_phenytoin').checked && (route==='NGTUBE' || route==='JEJUNOSTOMY')){
+    items.push({
+      title:'فنی‌توئین — کاهش جذب با تغذیه روده‌ای هم‌زمان',
+      body:'تغذیه روده‌ای هم‌زمان جذب فنی‌توئین را تا ۵۰٪ کاهش می‌دهد. گاواژ باید <b>۱–۲ ساعت قبل و بعد از تجویز فنی‌توئین متوقف</b> شود؛ سطح سرمی دارو (فنی‌توئین آزاد) پس از شروع/تغییر تغذیه پایش شود.',
+      ref:'Bauer LA, Clin Pharmacokinet — Phenytoin-enteral feeding interaction; UpToDate — Phenytoin drug interactions'
+    });
+  }
+  if($('md_warfarin').checked){
+    items.push({
+      title:'وارفارین — تداخل با ویتامین K فرمولای تغذیه',
+      body:'اکثر فرمولاهای استاندارد تغذیه روده‌ای/وریدی حاوی ویتامین K هستند که می‌تواند اثر ضدانعقادی وارفارین را کاهش دهد. با هرگونه شروع/تغییر فرمولا، INR طی ۴۸–۷۲ ساعت آینده پایش و دوز وارفارین در صورت نیاز تنظیم شود.',
+      ref:'UpToDate — Warfarin drug and dietary interactions; ASPEN Drug-Nutrient Interaction guidance'
+    });
+  }
+  if($('md_fluoroquinolone').checked && (route==='NGTUBE' || route==='JEJUNOSTOMY')){
+    items.push({
+      title:'فلوروکینولون — کلات‌شدن با کاتیون‌های دوظرفیتی فرمولا',
+      body:'کلسیم و منیزیم موجود در فرمولای گاواژ با سیپروفلوکساسین/لووفلوکساسین کمپلکس غیرقابل‌جذب می‌سازند (تا ~۳۰–۹۰٪ کاهش جذب). گاواژ باید <b>حداقل ۱–۲ ساعت قبل یا بعد</b> از تجویز آنتی‌بیوتیک متوقف شود.',
+      ref:'Healy DP et al., Antimicrob Agents Chemother — Ciprofloxacin-enteral nutrition interaction; UpToDate — Fluoroquinolone drug interactions'
+    });
+  }
+  if($('md_levothyroxine').checked && (route==='NGTUBE' || route==='JEJUNOSTOMY')){
+    items.push({
+      title:'لووتیروکسین — کاهش جذب با تغذیه پیوسته روده‌ای',
+      body:'تغذیه روده‌ای مداوم جذب لووتیروکسین را به‌طور قابل‌توجه کاهش می‌دهد. توصیه می‌شود گاواژ <b>حداقل ۳۰–۶۰ دقیقه قبل</b> از تجویز دارو متوقف و لوله با آب شست‌وشو شود؛ TSH پس از شروع رژیم پایش شود.',
+      ref:'UpToDate — Levothyroxine drug interactions; JPEN — Enteral feeding and levothyroxine absorption'
+    });
+  }
+  return items;
+}
+
+function renderDrugInteractions(items){
+  if(!items || items.length===0) return '';
+  return items.map(it=>`
+    <div class="alert">
+      <b>${it.title}</b><br>${it.body}
+      <div class="fix-ref" style="border-top:1px dashed #E3C08C;">📚 مرجع: ${it.ref}</div>
+    </div>
+  `).join('');
+}
+
+function refeedingRisk(bmi, wtLossPercent, labs){
+  let high = false, reasons=[];
+  if(bmi!==null && bmi<16){ high=true; reasons.push('BMI<16'); }
+  if(wtLossPercent!==null && wtLossPercent>15){ high=true; reasons.push('کاهش وزن >15٪'); }
+  if(labs.k!==null && labs.k<3){ high=true; reasons.push('هیپوکالمی پایه'); }
+  if(labs.phos!==null && labs.phos<2.5){ high=true; reasons.push('هیپوفسفاتمی پایه'); }
+  if(labs.mg!==null && labs.mg<1.5){ high=true; reasons.push('هیپومنیزمی پایه'); }
+  return { high, reasons };
+}
+
+/* ================= MAIN RUN ================= */
+function runAll(){
+  const apache = calcAPACHE();
+  const nrs = calcNRS();
+  const bmi = calcBMI();
+  const autoRoute = decideRoute(apache);
+  const manualChoice = $('gi_manualRoute').value;
+  let routeInfo;
+  if(manualChoice === 'auto'){
+    routeInfo = autoRoute;
+  } else {
+    const manualWhyPrefix = `این مسیر توسط متخصص تغذیه/پزشک به‌صورت دستی انتخاب شده است. `;
+    const systemSuggestion = manualChoice === autoRoute.route
+      ? 'پیشنهاد خودکار سیستم نیز با همین مسیر مطابقت دارد.'
+      : `توجه: پیشنهاد خودکار سیستم بر اساس فیلدهای وضعیت GI، مسیر «${routeLabelFa(autoRoute.route)}» بود (دلیل: ${autoRoute.why}) — در صورت تمایل بازبینی کنید.`;
+    routeInfo = { route: manualChoice, why: manualWhyPrefix + systemSuggestion };
+  }
+  const needs = calcNeeds(routeInfo.route);
+  const labs = { na:num('lb_na'), k:num('lb_k'), mg:num('lb_mg'), phos:num('lb_phos'), glucose:num('lb_glucose'), ca:num('lb_ca') };
+  const micro = calcMicro(needs.dosingWt, $('ds_category').value, num('ds_tbsa')||0, $('ds_woundStage').value, labs);
+  const refeed = refeedingRisk(bmi, num('an_wtLossPercent'), labs);
+  const electrolyteFixHTML = generateElectrolyteFix(labs, needs.dosingWt);
+  const giTol = generateGiTolerance(routeInfo.route);
+  const drugInts = generateDrugInteractions(needs, routeInfo.route);
+
+  /* ---- scores ---- */
+  $('out_apache').textContent = apache.total;
+  $('out_apacheInterp').innerHTML = apacheInterp(apache.total);
+  $('out_nrs').textContent = nrs.total;
+  $('out_nrsInterp').innerHTML = nrs.total>=3
+    ? '<span class="pill risk-high">ریسک تغذیه‌ای — شروع برنامه مراقبت تغذیه‌ای لازم است</span>'
+    : '<span class="pill risk-low">ریسک پایین — پایش هفتگی</span>';
+  $('out_bmi').textContent = bmi!==null ? fmt(bmi,1) : '--';
+  $('out_bmiInterp').innerHTML = bmiInterp(bmi);
+
+  /* ---- alerts ---- */
+  let alerts = '';
+  if(refeed.high){
+    alerts += `<div class="alert danger">⚠️ ریسک بالای سندروم ریفیدینگ (${refeed.reasons.join('، ')}) — کالری را از ۱۰ kcal/kg/day شروع و طی ۴–۷ روز به هدف برسانید؛ K، Mg، Phosphate را قبل از شروع و روزانه در ۳ روز اول پایش کنید و پیش از شروع تغذیه، تیامین تجویز شود.</div>`;
+  }
+  if(labs.glucose!==null && labs.glucose>180){
+    alerts += `<div class="alert">هایپرگلیسمی (گلوکز ${labs.glucose} mg/dL) — کنترل دقیق قند خون و بازبینی نسبت کربوهیدرات توصیه می‌شود.</div>`;
+  }
+  if(needs.fatWarning){
+    alerts += `<div class="alert danger">${needs.fatWarning}</div>`;
+  }
+  if(num('lb_arf') !== null && $('lb_arf').checked){
+    alerts += `<div class="alert">نارسایی حاد کلیه فعال — پروتئین/الکترولیت بر اساس وضعیت دیالیز/CRRT بازبینی مجدد شود.</div>`;
+  }
+  $('out_alerts').innerHTML = alerts;
+
+  /* ---- route ---- */
+  const routeLabels = {NPO:'NPO', TPN:'TPN', NGTUBE:'NG TUBE', JEJUNOSTOMY:'JEJUNOSTOMY'};
+  $('out_route').innerHTML = routeLabels[routeInfo.route] + (manualChoice!=='auto' ? ' <span style="font-size:11px;background:#fff;color:var(--teal-900);padding:2px 8px;border-radius:6px;margin-inline-start:6px;">انتخاب دستی</span>' : '');
+  $('out_routeWhy').textContent = routeInfo.why;
+
+  /* ---- needs table ---- */
+  $('out_needsTable').innerHTML = `
+    <tr><th>پارامتر</th><th>مقدار</th><th>توضیح</th></tr>
+    <tr><td>وزن مبنای محاسبه</td><td>${fmt(needs.dosingWt,1)} kg</td><td>وزن خشک/فعلی با تعدیل چاقی در صورت نیاز</td></tr>
+    <tr><td>انرژی هدف</td><td>${needs.totalKcal} kcal/day</td><td>${needs.calorieNote}</td></tr>
+    <tr><td>پروتئین</td><td>${needs.proteinG} g/day (${fmt(needs.proteinPerKg,2)} g/kg)</td><td>${needs.proteinKcal} kcal از پروتئین</td></tr>
+    <tr><td>چربی</td><td>${needs.fatG} g/day</td><td>${needs.fatKcal} kcal — حدود ۳۰٪ کالری غیرپروتئینی</td></tr>
+    <tr><td>کربوهیدرات</td><td>${needs.carbG} g/day</td><td>${needs.carbKcal} kcal — GRIR: ${fmt(needs.grirMgKgMin,2)} mg/kg/min</td></tr>
+    <tr><td>مایعات</td><td>${needs.fluidTotal} ml/day</td><td>${needs.fluidNote}</td></tr>
+  `;
+
+  /* ---- TPN / EN sections ---- */
+  $('tpnSection').style.display = 'none';
+  $('enSection').style.display = 'none';
+  let formulationHTML = '';
+  if(routeInfo.route==='TPN'){
+    const tpn = calcTPN(needs);
+    $('tpnSection').style.display = 'block';
+    $('out_tpnOptions').innerHTML = `
+      <table class="mono-table">
+        <tr><th>محلول</th><th>غلظت</th><th>حجم</th><th>محتوا</th></tr>
+        <tr><td>دکستروز</td><td>D70%</td><td>${tpn.dextroseVol} ml</td><td>${needs.carbG} g کربوهیدرات</td></tr>
+        <tr><td>اسید آمینه</td><td>10%</td><td>${tpn.aminoVol} ml</td><td>${needs.proteinG} g پروتئین</td></tr>
+        <tr><td>امولسیون چربی</td><td>20%</td><td>${tpn.lipidVol} ml</td><td>${needs.fatG} g چربی</td></tr>
+        <tr><td>الکترولیت/ویتامین/ریزمغذی</td><td>—</td><td>~100 ml</td><td>طبق جدول ریزمغذی‌ها</td></tr>
+        <tr><td><b>حجم کل کیسه (All-in-One)</b></td><td colspan="2"><b>${tpn.totalVol} ml</b></td><td>سرعت انفوزیون ۲۴ساعته: <b>${tpn.rate24} ml/hr</b></td></tr>
+      </table>
+      <div class="alert">گزینه جایگزین: انفوزیون سیکلیک ۱۴ ساعته (شب) با سرعت <b class="mono">${tpn.rateCyclic} ml/hr</b> برای بیماران کاندید ترخیص/تحرک بیشتر روزانه — نیازمند پایش دقیق‌تر قند خون در زمان قطع/شروع.</div>
+      <p class="desc">شروع با ۵۰٪ حجم محاسبه‌شده در روز اول و افزایش تدریجی به حجم کامل طی ۲۴–۴۸ ساعت با پایش قند خون هر ۴–۶ ساعت توصیه می‌شود (به‌ویژه در ریسک ریفیدینگ).</p>
+    `;
+    formulationHTML = $('out_tpnOptions').innerHTML;
+  } else if(routeInfo.route==='NGTUBE' || routeInfo.route==='JEJUNOSTOMY'){
+    const en = calcEnteral(routeInfo.route, needs, $('ds_category').value, labs);
+    $('enSection').style.display = 'block';
+    $('out_enPlan').innerHTML = `
+      <table class="mono-table">
+        <tr><th>پارامتر</th><th>مقدار</th></tr>
+        <tr><td>فرمولای پیشنهادی</td><td>${en.formula.name} (چگالی ${en.formula.density} kcal/ml)</td></tr>
+        <tr><td>حجم روزانه هدف</td><td>${en.dailyVol} ml/day</td></tr>
+        <tr><td>سرعت شروع</td><td>${en.startRate} ml/hr (تروفیک)</td></tr>
+        <tr><td>سرعت هدف</td><td>~${en.goalRate} ml/hr (انفوزیون مداوم ~۲۰ساعته)</td></tr>
+        <tr><td>روش افزایش</td><td>افزایش ۱۰–۲۰ ml/hr هر ۶–۸ ساعت تا رسیدن به سرعت هدف، بر اساس تحمل GI</td></tr>
+      </table>
+      <p class="desc">${routeInfo.route==='JEJUNOSTOMY' ? 'به‌دلیل نبود مخزن معده، تغذیه به‌صورت مداوم (نه بولوس) و با سرعت شروع پایین‌تر توصیه می‌شود.' : 'در صورت تحمل مناسب پس از ۴۸–۷۲ ساعت، امکان تبدیل به تغذیه بولوس/سیکلیک بررسی شود.'}</p>
+    `;
+    formulationHTML = $('out_enPlan').innerHTML;
+  } else {
+    formulationHTML = '<p>بیمار در وضعیت NPO — تغذیه تخصصی (TPN/EN) فعلاً آغاز نشده؛ مایعات و الکترولیت وریدی نگهدارنده ادامه یابد و وضعیت GI/همودینامیک هر ۱۲–۲۴ ساعت بازبینی شود.</p>';
+  }
+
+  /* ---- micro table ---- */
+  $('out_microTable').innerHTML = '<tr><th>ماده</th><th>دوز</th><th>واحد/توضیح</th><th>یادداشت</th></tr>' +
+    micro.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]?('<span style="color:var(--red-600);font-weight:600;">'+r[3]+'</span>'):''}</td></tr>`).join('');
+
+  /* ---- monitoring ---- */
+  const monitorItems = [
+    'گلوکز خون هر ۴–۶ ساعت تا پایداری، سپس روزانه',
+    'الکترولیت‌ها (Na, K, Mg, Phosphate) روزانه در هفته اول، سپس ۲–۳ بار در هفته',
+    'تری‌گلیسیرید هفتگی در صورت دریافت امولسیون چربی وریدی',
+    'آزمایش عملکرد کبد و بیلی‌روبین هفتگی در TPN طولانی‌مدت',
+    'وزن روزانه/هفتگی و تعادل مایعات روزانه',
+    'ارزیابی تحمل GI (تهوع، اتساع شکم، residual معده) هر شیفت در تغذیه روده‌ای',
+    'BUN/کراتینین جهت پایش عملکرد کلیه و کفایت پروتئین'
+  ];
+  if(refeed.high) monitorItems.unshift('پایش فسفات/پتاسیم/منیزیم هر ۱۲–۲۴ ساعت در ۳ روز اول (ریسک ریفیدینگ)');
+  $('out_monitoring').innerHTML = monitorItems.map(m=>`<li>${m}</li>`).join('');
+
+  /* ---- electrolyte correction protocols ---- */
+  if(electrolyteFixHTML){
+    $('electrolyteFixSection').style.display = 'block';
+    $('out_electrolyteFix').innerHTML = electrolyteFixHTML;
+  } else {
+    $('electrolyteFixSection').style.display = 'none';
+  }
+
+  /* ---- GI tolerance ---- */
+  const giTolHTML = renderGiTolerance(giTol);
+  if(giTolHTML){
+    $('giTolSection').style.display = 'block';
+    $('out_giTol').innerHTML = giTolHTML;
+  } else {
+    $('giTolSection').style.display = 'none';
+  }
+
+  /* ---- drug-nutrient interactions ---- */
+  const drugIntHTML = renderDrugInteractions(drugInts);
+  if(drugIntHTML){
+    $('drugInteractionSection').style.display = 'block';
+    $('out_drugInteractions').innerHTML = drugIntHTML;
+  } else {
+    $('drugInteractionSection').style.display = 'none';
+  }
+
+  /* ---- printable sheet ---- */
+  buildSheet(apache, nrs, bmi, routeInfo, needs, formulationHTML, alerts, monitorItems, refeed, electrolyteFixHTML, giTolHTML, drugIntHTML);
+
+  $('results').style.display = 'block';
+  $('results').scrollIntoView({behavior:'smooth'});
+}
+
+function apacheInterp(score){
+  let mortality, cls;
+  if(score<=9){ mortality='~۴٪ مرگ‌ومیر تخمینی'; cls='risk-low'; }
+  else if(score<=19){ mortality='~۲۵٪ مرگ‌ومیر تخمینی'; cls='risk-mod'; }
+  else if(score<=29){ mortality='~۵۰٪ مرگ‌ومیر تخمینی'; cls='risk-high'; }
+  else { mortality='&gt;۷۵٪ مرگ‌ومیر تخمینی'; cls='risk-high'; }
+  return `<span class="pill ${cls}">شدت بیماری</span> ${mortality}`;
+}
+function bmiInterp(bmi){
+  if(bmi===null) return '';
+  if(bmi<18.5) return '<span class="pill risk-mod">کمبود وزن</span>';
+  if(bmi<25) return '<span class="pill risk-low">طبیعی</span>';
+  if(bmi<30) return '<span class="pill risk-mod">اضافه‌وزن</span>';
+  return '<span class="pill risk-high">چاقی</span>';
+}
+
+function buildSheet(apache, nrs, bmi, routeInfo, needs, formulationHTML, alerts, monitorItems, refeed, electrolyteFixHTML, giTolHTML, drugIntHTML){
+  const name = $('pt_name').value || '—';
+  const age = $('pt_age').value || '—';
+  const sex = $('pt_sex').value==='male' ? 'مرد' : 'زن';
+  const mrn = $('pt_mrn').value || '—';
+  const dx = $('ds_diagnosis').value || '—';
+  const now = new Date();
+
+  $('sheet_meta').innerHTML = `<span>تاریخ: <b>${now.toLocaleDateString('fa-IR')}</b></span><span>شماره پرونده: <b>${mrn}</b></span><span>وضعیت: <b>بستری در ICU</b></span>`;
+  $('sheet_ptGrid').innerHTML = `
+    <div><span>نام و نام‌خانوادگی</span><b>${name}</b></div>
+    <div><span>سن / جنسیت</span><b>${age} / ${sex}</b></div>
+    <div><span>تشخیص اصلی</span><b style="font-size:12.5px;">${dx}</b></div>
+    <div><span>BMI</span><b>${bmi!==null?fmt(bmi,1):'—'}</b></div>
+  `;
+  $('sheet_scores').innerHTML = `
+    <div class="sheet-badge"><span>APACHE II</span><b>${apache.total}</b></div>
+    <div class="sheet-badge"><span>NRS-2002</span><b>${nrs.total} ${nrs.total>=3?'⚠':''}</b></div>
+    <div class="sheet-badge"><span>ریسک ریفیدینگ</span><b style="color:${refeed.high?'var(--red-600)':'var(--teal-900)'};font-size:14px;">${refeed.high?'بالا':'پایین'}</b></div>
+  `;
+  $('sheet_route').innerHTML = `<div class="rbadge">${routeLabelFa(routeInfo.route)}</div><p>${routeInfo.why}</p>`;
+  $('sheet_needs').innerHTML = `
+    <table class="mono-table"><tr>
+      <th>انرژی</th><th>پروتئین</th><th>چربی</th><th>کربوهیدرات</th><th>مایعات</th>
+    </tr><tr>
+      <td>${needs.totalKcal} kcal</td><td>${needs.proteinG} g</td><td>${needs.fatG} g</td><td>${needs.carbG} g</td><td>${needs.fluidTotal} ml</td>
+    </tr></table>`;
+  $('sheet_formulation').innerHTML = formulationHTML;
+  if(giTolHTML){
+    $('sheet_giTolSec').style.display = 'block';
+    $('sheet_giTol').innerHTML = giTolHTML;
+  } else {
+    $('sheet_giTolSec').style.display = 'none';
+  }
+  if(drugIntHTML){
+    $('sheet_drugIntSec').style.display = 'block';
+    $('sheet_drugInt').innerHTML = drugIntHTML;
+  } else {
+    $('sheet_drugIntSec').style.display = 'none';
+  }
+  $('sheet_micro').innerHTML = $('out_microTable').outerHTML;
+  if(electrolyteFixHTML){
+    $('sheet_electrolyteFixSec').style.display = 'block';
+    $('sheet_electrolyteFix').innerHTML = electrolyteFixHTML;
+  } else {
+    $('sheet_electrolyteFixSec').style.display = 'none';
+  }
+  $('sheet_alertsMonitor').innerHTML = alerts + '<ul class="note-list">' + monitorItems.map(m=>`<li>${m}</li>`).join('') + '</ul>';
+}
+
+/* ================= Telegram Mini App integration ================= */
+(function initTelegramWebApp(){
+  if(!window.Telegram || !window.Telegram.WebApp) return;
+  const tg = window.Telegram.WebApp;
+  try{
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#0B4A43');
+    tg.setBackgroundColor('#F4F7F5');
+    tg.enableClosingConfirmation();
+  }catch(e){ /* older Telegram client — ignore */ }
+
+  tg.MainButton.setText('ارسال خلاصه به بات');
+  tg.MainButton.hide();
+
+  tg.MainButton.onClick(function(){
+    const name = document.getElementById('pt_name').value || '—';
+    const route = document.getElementById('out_route') ? document.getElementById('out_route').textContent.trim() : '—';
+    const apache = document.getElementById('out_apache') ? document.getElementById('out_apache').textContent : '—';
+    const nrs = document.getElementById('out_nrs') ? document.getElementById('out_nrs').textContent : '—';
+    const needsRows = document.getElementById('out_needsTable') ? document.getElementById('out_needsTable').innerText : '';
+    const summary = {
+      type: 'icu_nutrition_summary',
+      name, route, apache, nrs,
+      needs: needsRows,
+      ts: new Date().toISOString()
+    };
+    tg.sendData(JSON.stringify(summary));
+  });
+
+  // reveal the "send to bot" button once results exist
+  const origRunAll = window.runAll;
+  window.runAll = function(){
+    origRunAll();
+    tg.MainButton.show();
+  };
+})();
+
+</script>
+</body>
+</html>
